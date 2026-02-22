@@ -1,6 +1,7 @@
 package pl.kingdomcraft.beatly.cmds;
 
-import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import pl.kingdomcraft.beatly.managers.PlayerManager;
+import pl.kingdomcraft.beatly.utils.StageVoice;
 
 public class JoinCommand implements Command {
     @Override public String name() { return "join"; }
@@ -15,12 +16,25 @@ public class JoinCommand implements Command {
 
         var vs = member.getVoiceState();
         if (vs == null || !vs.inAudioChannel()) {
-            ctx.channel().sendMessage("Wejdź najpierw na voice.").queue();
+            ctx.channel().sendMessage("Wejdź najpierw na voice/stage.").queue();
             return;
         }
 
-        var channel = (VoiceChannel) vs.getChannel();
-        ctx.guild().getAudioManager().openAudioConnection(channel);
+        var audioManager = ctx.guild().getAudioManager();
+        var gmm = PlayerManager.getInstance().getGuildMusicManager(ctx.guild());
+
+        // Zapewniamy, że po wejściu jest cicho (nie startuje kolejka z automatu/nie słychać starej)
+        if (gmm.scheduler.isPlaying()) {
+            gmm.player.setPaused(true);
+        }
+
+        if (audioManager.getSendingHandler() == null) {
+            audioManager.setSendingHandler(gmm.sendHandler);
+        }
+
+        var channel = vs.getChannel(); // AudioChannel (Voice albo Stage)
+        StageVoice.connect(ctx.guild(), channel);
+
         ctx.channel().sendMessage("Dołączono na: **" + channel.getName() + "**").queue();
     }
 }

@@ -5,8 +5,10 @@ import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrame;
 import net.dv8tion.jda.api.audio.AudioSendHandler;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class AudioPlayerSendHandler implements AudioSendHandler {
+
     private final AudioPlayer audioPlayer;
     private AudioFrame lastFrame;
 
@@ -22,11 +24,11 @@ public class AudioPlayerSendHandler implements AudioSendHandler {
 
     @Override
     public ByteBuffer provide20MsAudio() {
-        return ByteBuffer.wrap(lastFrame.getData());
+        return ByteBuffer.wrap(lastFrame.getData()); // <-- to jest OPUS (po ustawieniu DISCORD_OPUS)
     }
 
     @Override
     public boolean isOpus() {
-        return true; // LavaPlayer daje OPUS
+        return true; // <-- bo wysyłamy OPUS
     }
 }

@@ -1,5 +1,6 @@
 package pl.kingdomcraft.beatly.managers;
 
+import com.sedmelluq.discord.lavaplayer.format.StandardAudioDataFormats;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
@@ -27,6 +28,8 @@ public class PlayerManager {
         this.playerManager = new DefaultAudioPlayerManager();
         AudioSourceManagers.registerLocalSource(playerManager);   // MP3 z dysku
         AudioSourceManagers.registerRemoteSources(playerManager); // (opcjonalnie) URL
+
+        playerManager.getConfiguration().setOutputFormat(StandardAudioDataFormats.DISCORD_OPUS);
     }
 
     public GuildMusicManager getGuildMusicManager(Guild guild) {
@@ -60,6 +63,39 @@ public class PlayerManager {
             @Override
             public void noMatches() {
                 onError.accept("Nie znaleziono: " + pathOrUrl);
+            }
+
+            @Override
+            public void loadFailed(FriendlyException exception) {
+                onError.accept("Nie udało się załadować: " + exception.getMessage());
+            }
+        });
+    }
+
+    public void loadTrack(Guild guild, String identifier,
+                          java.util.function.Consumer<AudioTrack> onLoaded,
+                          java.util.function.Consumer<String> onError) {
+
+        GuildMusicManager gmm = getGuildMusicManager(guild);
+
+        playerManager.loadItemOrdered(gmm, identifier, new AudioLoadResultHandler() {
+            @Override
+            public void trackLoaded(AudioTrack track) {
+                onLoaded.accept(track);
+            }
+
+            @Override
+            public void playlistLoaded(AudioPlaylist playlist) {
+                if (playlist.getTracks().isEmpty()) {
+                    onError.accept("Pusta playlista: " + identifier);
+                    return;
+                }
+                onLoaded.accept(playlist.getTracks().get(0));
+            }
+
+            @Override
+            public void noMatches() {
+                onError.accept("Nie znaleziono: " + identifier);
             }
 
             @Override

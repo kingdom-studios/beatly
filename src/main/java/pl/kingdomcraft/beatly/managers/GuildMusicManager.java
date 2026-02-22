@@ -11,6 +11,7 @@ public class GuildMusicManager {
 
     public GuildMusicManager(AudioPlayer player) {
         this.player = player;
+        this.player.setVolume(100);
         this.scheduler = new TrackScheduler(player);
         this.player.addListener(this.scheduler);
         this.sendHandler = new AudioPlayerSendHandler(player);
